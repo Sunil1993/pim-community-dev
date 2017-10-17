@@ -2,6 +2,7 @@
 
 namespace Pim\Bundle\CatalogBundle\Doctrine\ORM\Repository;
 
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityRepository;
 use Pim\Component\Catalog\Model\ProductInterface;
 use Pim\Component\Catalog\Repository\AssociationTypeRepositoryInterface;
@@ -23,15 +24,17 @@ class AssociationTypeRepository extends EntityRepository implements AssociationT
         $qb = $this->createQueryBuilder('a');
 
         if ($associations = $product->getAssociations()) {
-            $associationTypeIds = $associations->map(
-                function ($association) {
-                    return $association->getAssociationType()->getId();
-                }
-            );
+            if ($associations instanceof Collection) {
+                $associations = $associations->toArray();
+            }
 
-            if (!$associationTypeIds->isEmpty()) {
+            $associationTypeIds = array_map(function ($association) {
+                return $association->getAssociationType()->getId();
+            }, $associations);
+
+            if (!empty($associationTypeIds)) {
                 $qb->andWhere(
-                    $qb->expr()->notIn('a.id', $associationTypeIds->toArray())
+                    $qb->expr()->notIn('a.id', $associationTypeIds)
                 );
             }
         }

@@ -20,7 +20,7 @@ abstract class AbstractProduct implements ProductInterface
     protected $id;
 
     /** @var array */
-    protected $rawValues;
+    protected $rawValues = [];
 
     /** @var \Datetime $created */
     protected $created;
@@ -403,6 +403,16 @@ abstract class AbstractProduct implements ProductInterface
         }
 
         return (string) $data;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setCategories(Collection $categories)
+    {
+        $this->categories = $categories;
+
+        return $this;
     }
 
     /**
