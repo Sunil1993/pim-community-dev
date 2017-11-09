@@ -25,6 +25,7 @@ parameters:
     pim_catalog.query.elasticsearch.filter.completeness.class: Pim\Bundle\CatalogBundle\Elasticsearch\Filter\Field\CompletenessFilter
     pim_catalog.query.elasticsearch.filter.with_attributes.class: Pim\Bundle\CatalogBundle\Elasticsearch\Filter\Field\WithAttributesFilter
     pim_catalog.query.elasticsearch.filter.parent.class: Pim\Bundle\CatalogBundle\Elasticsearch\Filter\Field\ParentFilter
+    pim_catalog.query.elasticsearch.filter.entity_type.class: Pim\Bundle\CatalogBundle\Elasticsearch\Filter\Field\EntityTypeFilter
     pim_catalog.query.elasticsearch.filter.date.class: Pim\Bundle\CatalogBundle\Elasticsearch\Filter\Attribute\DateFilter
     pim_catalog.query.elasticsearch.filter.number.class: Pim\Bundle\CatalogBundle\Elasticsearch\Filter\Attribute\NumberFilter
     pim_catalog.query.elasticsearch.filter.text.class: Pim\Bundle\CatalogBundle\Elasticsearch\Filter\Attribute\TextFilter
@@ -314,6 +315,14 @@ services:
         tags:
             - { name: 'pim_catalog.elasticsearch.query.product_filter', priority: 30 }
             - { name: 'pim_catalog.elasticsearch.query.product_model_filter', priority: 30 }
+            - { name: 'pim_catalog.elasticsearch.query.product_and_product_model_filter', priority: 30 }
+
+    pim_catalog.query.elasticsearch.filter.document_type:
+        class: '%pim_catalog.query.elasticsearch.filter.entity_type.class%'
+        arguments:
+            - ['entity_type']
+            - ['=']
+        tags:
             - { name: 'pim_catalog.elasticsearch.query.product_and_product_model_filter', priority: 30 }
 
     # Attributes filters

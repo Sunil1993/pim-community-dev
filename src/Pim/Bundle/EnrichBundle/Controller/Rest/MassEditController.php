@@ -6,6 +6,8 @@ use Oro\Bundle\DataGridBundle\Extension\MassAction\MassActionParametersParser;
 use Pim\Bundle\DataGridBundle\Adapter\GridFilterAdapterInterface;
 use Pim\Bundle\EnrichBundle\MassEditAction\Operation\MassEditOperation;
 use Pim\Bundle\EnrichBundle\MassEditAction\OperationJobLauncher;
+use Pim\Component\Catalog\Query\Filter\Operators;
+use Pim\Component\Catalog\Query\ProductQueryBuilderFactoryInterface;
 use Pim\Component\Enrich\Converter\ConverterInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,22 +33,28 @@ class MassEditController
     /** @var ConverterInterface */
     protected $operationConverter;
 
+    /** @var ProductQueryBuilderFactoryInterface */
+    private $productAndProductModelQueryBuilderFactory;
+
     /**
-     * @param MassActionParametersParser  $parameterParser
-     * @param GridFilterAdapterInterface  $filterAdapter
-     * @param OperationJobLauncher        $operationJobLauncher
-     * @param ConverterInterface          $operationConverter
+     * @param MassActionParametersParser          $parameterParser
+     * @param GridFilterAdapterInterface          $filterAdapter
+     * @param OperationJobLauncher                $operationJobLauncher
+     * @param ConverterInterface                  $operationConverter
+     * @param ProductQueryBuilderFactoryInterface $productAndProductModelQueryBuilderFactory
      */
     public function __construct(
         MassActionParametersParser $parameterParser,
         GridFilterAdapterInterface $filterAdapter,
         OperationJobLauncher $operationJobLauncher,
-        ConverterInterface $operationConverter
+        ConverterInterface $operationConverter,
+        ProductQueryBuilderFactoryInterface $productAndProductModelQueryBuilderFactory
     ) {
         $this->parameterParser      = $parameterParser;
         $this->filterAdapter        = $filterAdapter;
         $this->operationJobLauncher = $operationJobLauncher;
         $this->operationConverter   = $operationConverter;
+        $this->productAndProductModelQueryBuilderFactory = $productAndProductModelQueryBuilderFactory;
     }
 
     /**
@@ -58,6 +66,7 @@ class MassEditController
     {
         $parameters = $this->parameterParser->parse($request);
         $filters = $this->filterAdapter->adapt($parameters);
+        $filters['products_count'] = $this->getProductCounts($filters);
 
         return new JsonResponse($filters);
     }
@@ -76,5 +85,41 @@ class MassEditController
         $this->operationJobLauncher->launch($operation);
 
         return new JsonResponse();
+    }
+
+    /**
+     * @param $filters
+     *
+     * @return int
+     */
+    private function getProductCounts(array $filters): int
+    {
+        $pqbOptions = ['filters' => $filters];
+
+        foreach ($filters[0]['value'] as $code) {
+            if ($this->isProductModelIdentifier($code)) {
+                $filters[] = [
+                    'field' => 'parent',
+                    'operator' => Operators::IN_LIST,
+                    'value' => $code
+                ];
+            }
+        }
+
+
+
+        return $this->productAndProductModelQueryBuilderFactory->create($pqbOptions)->execute()->count();
+    }
+
+    /**
+     * Checks if the given code is a product model code.
+     *
+     * @param $code
+     *
+     * @return bool
+     */
+    private function isProductModelIdentifier(string $code): bool
+    {
+        return 0 === strpos($code, 'product_model');
     }
 }
