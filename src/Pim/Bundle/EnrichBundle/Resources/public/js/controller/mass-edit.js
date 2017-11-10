@@ -27,9 +27,6 @@ define(
                         };
                     }).value();
 
-                var itemsCount = _.find(parameters, function (parameter) {
-                    return 'itemsCount' === parameter.key;
-                }).value;
                 var actionName = _.find(parameters, function (parameter) {
                     return 'actionName' === parameter.key;
                 }).value.replace(new RegExp('_', 'g'), '-');
@@ -37,6 +34,7 @@ define(
                 return $.ajax({
                     url: Routing.generate('pim_enrich_mass_edit_rest_get_filter') + query
                 }).then((filters) => {
+                    const itemsCount = filters['products_count'];
                     return FormBuilder.build('pim-mass-' + actionName).then((form) => {
                         form.setData({
                             filters: filters,

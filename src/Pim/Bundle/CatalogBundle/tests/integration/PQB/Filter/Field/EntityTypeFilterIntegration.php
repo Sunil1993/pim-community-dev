@@ -28,6 +28,33 @@ class EntityTypeFilterIntegration extends AbstractProductAndProductModelQueryBui
         $this->assertEquals(80, $result->count());
     }
 
-    # get all variant product children of root product model
-    # get all variant product children of sub product model
+    public function test_filters_products_for_a_given_root_product_model()
+    {
+        $result = $this->executeFilter(
+            [
+                ['entity_type', Operators::EQUALS, ProductInterface::class],
+                ['parent', Operators::IN_LIST, ['model-braided-hat']],
+            ]
+        );
+        $this->assert($result, ['braided-hat-m', 'braided-hat-xxxl']);
+    }
+
+    public function test_filters_products_for_a_given_sub_product_model()
+    {
+        $result = $this->executeFilter(
+            [
+                ['entity_type', Operators::EQUALS, ProductInterface::class],
+                ['parent', Operators::IN_LIST, ['model-tshirt-divided-navy-blue']],
+            ]
+        );
+        $this->assert(
+            $result,
+            [
+                'tshirt-divided-navy-blue-l',
+                'tshirt-divided-navy-blue-m',
+                'tshirt-divided-navy-blue-xxs',
+                'tshirt-divided-navy-blue-xxxl',
+            ]
+        );
+    }
 }
