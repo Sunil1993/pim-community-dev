@@ -116,18 +116,7 @@ class ProductAndProductModelQueryBuilder implements ProductQueryBuilderInterface
             }
         );
 
-        $entityTypeFilter = array_filter(
-            $this->getRawFilters(),
-            function ($filter) {
-                return 'entity_type' === $filter['field'];
-            }
-        );
-
-        return empty($attributeFilters) &&
-            empty($parentFilter) &&
-            empty($idFilter) &&
-            empty($identifierFilter) &&
-            empty($entityTypeFilter);
+        return empty($attributeFilters) && empty($parentFilter) && empty($idFilter) && empty($identifierFilter);
     }
 
     /**

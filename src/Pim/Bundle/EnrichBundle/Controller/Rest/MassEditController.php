@@ -7,7 +7,6 @@ use Pim\Bundle\DataGridBundle\Adapter\GridFilterAdapterInterface;
 use Pim\Bundle\DataGridBundle\Normalizer\IdEncoder;
 use Pim\Bundle\EnrichBundle\MassEditAction\Operation\MassEditOperation;
 use Pim\Bundle\EnrichBundle\MassEditAction\OperationJobLauncher;
-use Pim\Component\Catalog\Model\ProductInterface;
 use Pim\Component\Catalog\Model\ProductModelInterface;
 use Pim\Component\Catalog\Query\Filter\Operators;
 use Pim\Component\Catalog\Query\ProductQueryBuilderFactoryInterface;
@@ -43,6 +42,9 @@ class MassEditController
     /** @var ProductModelRepositoryInterface */
     private $productModelRepository;
 
+    /** @var ProductQueryBuilderFactoryInterface */
+    private $productQueryBuilderFactory;
+
     /**
      * @param MassActionParametersParser          $parameterParser
      * @param GridFilterAdapterInterface          $filterAdapter
@@ -50,6 +52,7 @@ class MassEditController
      * @param ConverterInterface                  $operationConverter
      * @param ProductModelRepositoryInterface     $productModelRepository
      * @param ProductQueryBuilderFactoryInterface $productAndProductModelQueryBuilderFactory
+     * @param ProductQueryBuilderFactoryInterface $productQueryBuilderFactory
      */
     public function __construct(
         MassActionParametersParser $parameterParser,
@@ -57,7 +60,8 @@ class MassEditController
         OperationJobLauncher $operationJobLauncher,
         ConverterInterface $operationConverter,
         ProductModelRepositoryInterface $productModelRepository,
-        ProductQueryBuilderFactoryInterface $productAndProductModelQueryBuilderFactory
+        ProductQueryBuilderFactoryInterface $productAndProductModelQueryBuilderFactory,
+        ProductQueryBuilderFactoryInterface $productQueryBuilderFactory
     ) {
         $this->parameterParser      = $parameterParser;
         $this->filterAdapter        = $filterAdapter;
@@ -65,6 +69,7 @@ class MassEditController
         $this->operationConverter   = $operationConverter;
         $this->productAndProductModelQueryBuilderFactory = $productAndProductModelQueryBuilderFactory;
         $this->productModelRepository = $productModelRepository;
+        $this->productQueryBuilderFactory = $productQueryBuilderFactory;
     }
 
     /**
@@ -106,14 +111,14 @@ class MassEditController
      */
     private function getProductsAndVariantProductsCount(array $filters): int
     {
-        $operator = isset($filters[0]) && isset($filters[0]['operator']) ? $filters[0]['operator'] : null;
         $productsCount = $this->getProductsCount($filters);
 
-        if (null === $operator) {
+        if ($this->isAllEntityQuery($filters)) {
             return $productsCount;
         }
 
         $variantProductsCount = $this->getVariantProductsCount($filters);
+        $operator = $this->getOperator($filters);
         if (Operators::IN_LIST === $operator) {
             return $productsCount + $variantProductsCount;
         } elseif (Operators::NOT_IN_LIST === $operator) {
@@ -126,6 +131,28 @@ class MassEditController
     }
 
     /**
+     * Checks wether the user has filtered on 'All entities' in the product grid.
+     *
+     * @param array $filters
+     *
+     * @return bool
+     */
+    private function isAllEntityQuery(array $filters): bool
+    {
+        return null === $this->getOperator($filters);
+    }
+
+    /**
+     * @param array $filters
+     *
+     * @return null|string
+     */
+    private function getOperator(array $filters): ?string
+    {
+        return isset($filters[0]) && isset($filters[0]['operator']) ? $filters[0]['operator'] : null;
+    }
+
+    /**
      * @param array $filters
      *
      * @return int
@@ -133,11 +160,11 @@ class MassEditController
     private function getProductsCount(array $filters): int
     {
         $pqbOptionsProducts = $this->getPqbOptionsProducts($filters);
-        if (empty($pqbOptionsProducts['filters'])) {
+        if (empty($pqbOptionsProducts['filters']) && !empty($filters)) {
             return 0;
         }
 
-        $productsCount = $this->productAndProductModelQueryBuilderFactory->create($pqbOptionsProducts)
+        $productsCount = $this->productQueryBuilderFactory->create($pqbOptionsProducts)
             ->execute()
             ->count();
 
@@ -151,22 +178,34 @@ class MassEditController
      */
     private function getPqbOptionsProducts(array $filters): array
     {
-        foreach ($filters as &$condition) {
+        $filteredFilters = [];
+
+        foreach ($filters as $condition) {
             $productIds = [];
             foreach ($condition['value'] as $id) {
                 if (!$this->isProductModelIdentifier($id)) {
-                    $productIds[] = $id;
+                    $productIds[] = (string) IdEncoder::decode($id)['id'];
                 }
             }
-            $condition['value'] = $productIds;
+            if (!empty($productIds)) {
+                $condition['value'] = $productIds;
+                $filteredFilters[] = $condition;
+            }
         }
-        $filters[] = [
-            'field'    => 'entity_type',
-            'operator' => Operators::EQUALS,
-            'value'    => ProductInterface::class,
-        ];
 
-        return ['filters' => $filters];
+        return ['filters' => $filteredFilters];
+    }
+
+    /**
+     * Checks if the given code is a product model code.
+     *
+     * @param $code
+     *
+     * @return bool
+     */
+    private function isProductModelIdentifier(string $code): bool
+    {
+        return 0 === strpos($code, 'product_model');
     }
 
     /**
@@ -193,19 +232,16 @@ class MassEditController
      */
     private function generatePqbOptionsForVariantProducts(array $productsFilters): array
     {
+        $productModelFilters = [];
         $productModelCodes = $this->getProductModelCodes($productsFilters);
 
-        $productModelFilters = [];
-        $productModelFilters[] = [
-            'field'    => 'parent',
-            'operator' => Operators::IN_LIST,
-            'value'    => $productModelCodes,
-        ];
-        $productModelFilters[] = [
-            'field'    => 'entity_type',
-            'operator' => Operators::EQUALS,
-            'value'    => ProductInterface::class,
-        ];
+        if (!empty($productModelCodes)) {
+            $productModelFilters[] = [
+                'field'    => 'parent',
+                'operator' => Operators::IN_LIST,
+                'value'    => $productModelCodes,
+            ];
+        }
 
         return ['filters' => $productModelFilters];
     }
@@ -217,41 +253,24 @@ class MassEditController
      */
     private function getProductModelCodes(array $filters): array
     {
-        $productModelCodes = [];
+        $allProductModelCodes = [];
         foreach ($filters[0]['value'] as $productModelId) {
             if ($this->isProductModelIdentifier($productModelId)) {
                 $productModelId = IdEncoder::decode($productModelId)['id'];
-                $productModel = $this->getProductModel($productModelId);
+                $productModel = $this->productModelRepository->findOneBy(['id' => $productModelId]);
+                $productModelCodes = [];
                 if (null !== $productModel) {
                     $productModelCodes[] = $productModel->getCode();
-                    $productModelCodes = array_merge($productModelCodes, $this->getSubProductModelCodes($productModel));
+                    $subProductModelCodes = $this->getSubProductModelCodes($productModel);
+                    if (!empty($subProductModelCodes)) {
+                        $productModelCodes = $subProductModelCodes;
+                    }
                 }
+                $allProductModelCodes = array_merge($allProductModelCodes, $productModelCodes);
             }
         }
 
-        return $productModelCodes;
-    }
-
-    /**
-     * Checks if the given code is a product model code.
-     *
-     * @param $code
-     *
-     * @return bool
-     */
-    private function isProductModelIdentifier(string $code): bool
-    {
-        return 0 === strpos($code, 'product_model');
-    }
-
-    /**
-     * @param $productModelId
-     *
-     * @return null|ProductModelInterface
-     */
-    private function getProductModel($productModelId): ?ProductModelInterface
-    {
-        return $this->productModelRepository->findOneBy(['id' => $productModelId]);
+        return $allProductModelCodes;
     }
 
     /**
