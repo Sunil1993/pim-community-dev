@@ -30,9 +30,9 @@ interface ProductModelInterface extends
     /**
      * Gets the identifier of the product model.
      *
-     * @return string
+     * @return string|null
      */
-    public function getCode(): string;
+    public function getCode(): ?string;
 
     /**
      * Sets the product model identifier.
