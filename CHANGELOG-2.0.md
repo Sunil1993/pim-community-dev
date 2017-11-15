@@ -6,10 +6,6 @@
 - API-400: Update partially a family variant with the API
 - API-401: Update partially a list of family variants with the API
 
-## BC breaks
-
-- Replace `Pim\Component\Catalog\Builder\ProductBuilderInterface` by `Pim\Component\Connector\Processor\Denormalization\Product\AddParent` and `Pim\Component\Connector\Processor\Denormalization\Product\FindProductToImport` in `Pim\Component\Connector\Processor\Denormalization\ProductProcessor`
-
 ## Bug fixes
 
 - PIM-6489: fix the sort of attributes in attribute groups
@@ -26,10 +22,12 @@
 - PIM-6833: Aligns technical requirements with documentation
 - PIM-6992: Keep category panel open
 - PIM-6986: Change the image in add variant modal
+- PIM-6791: As Julia I would like to change a product in a variant product by import
 
 ## BC breaks
 
 - Change the constructor of `Pim\Bundle\ApiBundle\Controller\FamilyVariantController` to add `Pim\Bundle\ApiBundle\Stream\StreamResourceResponse`.
+- Replace `Pim\Component\Catalog\Builder\ProductBuilderInterface` by `Pim\Component\Connector\Processor\Denormalization\Product\AddParent` and `Pim\Component\Connector\Processor\Denormalization\Product\FindProductToImport` in `Pim\Component\Connector\Processor\Denormalization\ProductProcessor`
 
 # 2.0.6 (2017-11-03)
 
