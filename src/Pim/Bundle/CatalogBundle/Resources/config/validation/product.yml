@@ -1,7 +1,11 @@
 Pim\Component\Catalog\Model\Product:
+#    group_sequence:
+#        - Product
+#        - api
     constraints:
         - Pim\Component\Catalog\Validator\Constraints\UniqueEntity:
             entityClass: Pim\Component\Catalog\Model\AbstractProduct
+#            groups: [Product]
     properties:
         identifier:
             - NotBlank: ~
