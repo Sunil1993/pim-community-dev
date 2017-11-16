@@ -35,6 +35,7 @@ parameters:
     pim_catalog.query.elasticsearch.filter.metric.class: Pim\Bundle\CatalogBundle\Elasticsearch\Filter\Attribute\MetricFilter
     pim_catalog.query.elasticsearch.filter.media.class: Pim\Bundle\CatalogBundle\Elasticsearch\Filter\Attribute\MediaFilter
     pim_catalog.query.elasticsearch.filter.boolean.class: Pim\Bundle\CatalogBundle\Elasticsearch\Filter\Attribute\BooleanFilter
+    pim_catalog.query.elasticsearch.filter.ancestors_ids.class: Pim\Bundle\CatalogBundle\Elasticsearch\Filter\Field\AncestorsIdFilter
 
     pim_catalog.query.elasticsearch.sorter.base_field.class: Pim\Bundle\CatalogBundle\Elasticsearch\Sorter\Field\BaseFieldSorter
     pim_catalog.query.elasticsearch.sorter.family.class: Pim\Bundle\CatalogBundle\Elasticsearch\Sorter\Field\FamilySorter
@@ -322,6 +323,15 @@ services:
         arguments:
             - ['entity_type']
             - ['=']
+        tags:
+            - { name: 'pim_catalog.elasticsearch.query.product_and_product_model_filter', priority: 30 }
+
+    pim_catalog.query.elasticsearch.filter.ancestors_ids:
+        class: '%pim_catalog.query.elasticsearch.filter.ancestors_ids.class%'
+        arguments:
+            - '@pim_catalog.repository.product_model'
+            - '@pim_catalog.repository.product'
+            - ['IN']
         tags:
             - { name: 'pim_catalog.elasticsearch.query.product_and_product_model_filter', priority: 30 }
 

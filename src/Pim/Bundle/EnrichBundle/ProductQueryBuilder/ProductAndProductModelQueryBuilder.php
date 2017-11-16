@@ -123,11 +123,19 @@ class ProductAndProductModelQueryBuilder implements ProductQueryBuilderInterface
             }
         );
 
+        $ancestorsIdsFilter = array_filter(
+            $this->getRawFilters(),
+            function ($filter) {
+                return 'ancestors.ids' === $filter['field'];
+            }
+        );
+
         return empty($attributeFilters) &&
             empty($parentFilter) &&
             empty($idFilter) &&
             empty($identifierFilter) &&
-            empty($entityTypeFilter);
+            empty($entityTypeFilter) &&
+            empty($ancestorsIdsFilter);
     }
 
     /**
