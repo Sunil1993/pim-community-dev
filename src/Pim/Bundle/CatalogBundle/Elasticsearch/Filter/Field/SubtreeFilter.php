@@ -9,7 +9,6 @@ use Pim\Bundle\DataGridBundle\Normalizer\IdEncoder;
 use Pim\Component\Catalog\Exception\InvalidOperatorException;
 use Pim\Component\Catalog\Exception\ObjectNotFoundException;
 use Pim\Component\Catalog\Query\Filter\FieldFilterHelper;
-use Pim\Component\Catalog\Query\Filter\FieldFilterInterface;
 use Pim\Component\Catalog\Repository\ProductModelRepositoryInterface;
 use Pim\Component\Catalog\Repository\ProductRepositoryInterface;
 
@@ -18,9 +17,10 @@ use Pim\Component\Catalog\Repository\ProductRepositoryInterface;
  * @copyright 2017 Akeneo SAS (http://www.akeneo.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-class AncestorsIdFilter extends AbstractFieldFilter implements FieldFilterInterface
+class SubtreeFilter extends AbstractFieldFilter
 {
-    const ANCESTOR_ID_FIELD = 'ancestors.ids';
+    private const ANCESTOR_ID_ES_FIELD = 'ancestors.ids';
+    private const SUBTREE_FIELD = 'subtree.id';
 
     /** @var IdentifiableObjectRepositoryInterface */
     private $productModelRepository;
@@ -56,7 +56,7 @@ class AncestorsIdFilter extends AbstractFieldFilter implements FieldFilterInterf
      */
     public function supportsField($field): bool
     {
-        return $field === self::ANCESTOR_ID_FIELD;
+        return $field === self::SUBTREE_FIELD;
     }
 
     /**
@@ -69,7 +69,7 @@ class AncestorsIdFilter extends AbstractFieldFilter implements FieldFilterInterf
         }
 
         if (!$this->supportsOperator($operator)) {
-            throw InvalidOperatorException::notSupported($operator, AncestorsIdFilter::class);
+            throw InvalidOperatorException::notSupported($operator, SubtreeFilter::class);
         }
 
         $this->checkValues($values);
@@ -78,7 +78,7 @@ class AncestorsIdFilter extends AbstractFieldFilter implements FieldFilterInterf
             [
                 [
                     'terms' => [
-                        self::ANCESTOR_ID_FIELD => $values,
+                        self::ANCESTOR_ID_ES_FIELD => $values,
                     ],
                 ],
                 [
@@ -99,9 +99,9 @@ class AncestorsIdFilter extends AbstractFieldFilter implements FieldFilterInterf
      */
     private function checkValues($values): void
     {
-        FieldFilterHelper::checkArray(self::ANCESTOR_ID_FIELD, $values, static::class);
+        FieldFilterHelper::checkArray(self::ANCESTOR_ID_ES_FIELD, $values, static::class);
         foreach ($values as $value) {
-            FieldFilterHelper::checkString(self::ANCESTOR_ID_FIELD, $value, static::class);
+            FieldFilterHelper::checkString(self::ANCESTOR_ID_ES_FIELD, $value, static::class);
             if (!$this->isValidId($value)) {
                 throw new ObjectNotFoundException(
                     sprintf('Object "product model" or "product" with code "%s" does not exist', $value)

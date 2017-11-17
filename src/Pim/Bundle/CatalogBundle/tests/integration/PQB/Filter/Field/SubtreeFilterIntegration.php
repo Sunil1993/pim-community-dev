@@ -12,14 +12,15 @@ use Pim\Component\Catalog\Query\Filter\Operators;
  * @copyright 2017 Akeneo SAS (http://www.akeneo.com)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-class AncestorsIdsFilterIntegration extends AbstractProductAndProductModelQueryBuilderTestCase
+class SubtreeFilterIntegration extends AbstractProductAndProductModelQueryBuilderTestCase
 {
     public function testOperatorInListForRootProductModel()
     {
-        $result = $this->executeFilter([['ancestors.ids', Operators::IN_LIST, ['product_model_48']]]);
+        $result = $this->executeFilter([['subtree.id', Operators::IN_LIST, ['product_model_48']]]);
         $this->assert(
             $result,
             [
+                'model-running-shoes',
                 'model-running-shoes-m',
                 'model-running-shoes-xxs',
                 'model-running-shoes-xxxl',
@@ -38,10 +39,11 @@ class AncestorsIdsFilterIntegration extends AbstractProductAndProductModelQueryB
 
     public function testOperatorInListForSubProductModel()
     {
-        $result = $this->executeFilter([['ancestors.ids', Operators::IN_LIST, ['product_model_76']]]);
+        $result = $this->executeFilter([['subtree.id', Operators::IN_LIST, ['product_model_76']]]);
         $this->assert(
             $result,
             [
+                'model-running-shoes-xxs',
                 'running-shoes-xxs-antique-white',
                 'running-shoes-xxs-navy-blue',
                 'running-shoes-xxs-crimson-red',
@@ -52,14 +54,16 @@ class AncestorsIdsFilterIntegration extends AbstractProductAndProductModelQueryB
     public function testOperatorInListForMultipleProductModels()
     {
         $result = $this->executeFilter(
-            [['ancestors.ids', Operators::IN_LIST, ['product_model_76', 'product_model_46']]]
+            [['subtree.id', Operators::IN_LIST, ['product_model_76', 'product_model_46']]]
         );
         $this->assert(
             $result,
             [
+                'model-running-shoes-xxs',
                 'running-shoes-xxs-antique-white',
                 'running-shoes-xxs-navy-blue',
                 'running-shoes-xxs-crimson-red',
+                'model-braided-hat',
                 'braided-hat-m',
                 'braided-hat-xxxl',
             ]

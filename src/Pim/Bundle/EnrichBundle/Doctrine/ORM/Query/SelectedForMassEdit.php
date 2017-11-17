@@ -11,7 +11,7 @@ use Pim\Component\Catalog\Repository\ProductRepositoryInterface;
 use Pim\Component\Enrich\Query\SelectedForMassEditInterface;
 
 /**
- * Given a list of PQB filters, determine the number of products in that selection.
+ * Given a list of PQB filters, determine the number of products within that selection.
  *
  * @author    Samir Boulil <samir.boulil@akeneo.com>
  * @copyright 2017 Akeneo SAS (http://www.akeneo.com)
@@ -25,22 +25,16 @@ class SelectedForMassEdit implements SelectedForMassEditInterface
     /** @var ProductQueryBuilderFactoryInterface */
     private $productQueryBuilderFactory;
 
-    /** @var ProductRepositoryInterface */
-    private $productRepository;
-
     /**
      * @param ProductQueryBuilderFactoryInterface $productAndProductModelQueryBuilderFactory
      * @param ProductQueryBuilderFactoryInterface $productQueryBuilderFactory
-     * @param ProductRepositoryInterface          $productRepository
      */
     public function __construct(
         ProductQueryBuilderFactoryInterface $productAndProductModelQueryBuilderFactory,
-        ProductQueryBuilderFactoryInterface $productQueryBuilderFactory,
-        ProductRepositoryInterface $productRepository
+        ProductQueryBuilderFactoryInterface $productQueryBuilderFactory
     ) {
         $this->productAndProductModelQueryBuilderFactory = $productAndProductModelQueryBuilderFactory;
         $this->productQueryBuilderFactory = $productQueryBuilderFactory;
-        $this->productRepository = $productRepository;
     }
 
     /**
@@ -65,11 +59,11 @@ class SelectedForMassEdit implements SelectedForMassEditInterface
     private function countImpactedProducts(array $filters): int
     {
         $ids = $this->extractIdsFromPqbFilters($filters);
-        $attributeAndFieldFilters = $this->extractAttributeAndFieldFilters($filters);
-        if (empty($ids) && !empty($attributeAndFieldFilters)) {
+        if (empty($ids)) {
+            $attributeAndFieldFilters = $this->extractAttributeAndFieldFilters($filters);
             $impactedProducts = $this->searchImpactedProducts($attributeAndFieldFilters);
         } else {
-            $impactedProducts = $this->searchImpactedProductsInProductModelTrees($attributeAndFieldFilters, $ids);
+            $impactedProducts = $this->searchImpactedProductsInProductModelTrees($ids);
         }
 
         return $impactedProducts;
@@ -116,7 +110,7 @@ class SelectedForMassEdit implements SelectedForMassEditInterface
      */
     private function getTotalProductsCount(): int
     {
-        return (int) $this->productRepository->countAll();
+        return $this->productQueryBuilderFactory->create()->execute()->count();
     }
 
     /**
@@ -157,9 +151,9 @@ class SelectedForMassEdit implements SelectedForMassEditInterface
      *
      * @return int
      */
-    private function searchImpactedProductsInProductModelTrees(array $attributeAndFieldFilters, array $ids): int
+    private function searchImpactedProductsInProductModelTrees(array $ids): int
     {
-        $pqb = $this->productAndProductModelQueryBuilderFactory->create($attributeAndFieldFilters);
+        $pqb = $this->productAndProductModelQueryBuilderFactory->create();
         $pqb->addFilter('entity_type', Operators::EQUALS, ProductInterface::class);
         if (!empty($ids)) {
             $pqb->addFilter('ancestors.ids', Operators::IN_LIST, $ids);

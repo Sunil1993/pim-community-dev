@@ -13,4 +13,3 @@ services:
         arguments:
             - '@pim_enrich.query.product_and_product_model_query_builder_factory'
             - '@pim_catalog.query.product_query_builder_factory'
-            - '@pim_catalog.repository.product'

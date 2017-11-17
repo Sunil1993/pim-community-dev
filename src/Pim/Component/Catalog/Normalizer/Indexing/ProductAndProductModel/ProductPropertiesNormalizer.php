@@ -30,7 +30,7 @@ class ProductPropertiesNormalizer implements NormalizerInterface, SerializerAwar
     private const FIELD_IN_GROUP = 'in_group';
     private const FIELD_ID = 'id';
     private const FIELD_PARENT = 'parent';
-    private const FIELD_ANCESTORS_IDS = 'ancestors.ids';
+    private const FIELD_ANCESTORS = 'ancestors';
 
     /**
      * {@inheritdoc}
@@ -95,10 +95,7 @@ class ProductPropertiesNormalizer implements NormalizerInterface, SerializerAwar
                 $context
             ) : [];
 
-        $data[self::FIELD_ANCESTORS_IDS] = [];
-        if ($product instanceof VariantProductInterface) {
-            $data[self::FIELD_ANCESTORS_IDS] = $this->getAncestorsIds($product);
-        }
+        $data[self::FIELD_ANCESTORS] = $this->getAncestors($product);
 
         return $data;
     }
@@ -139,6 +136,29 @@ class ProductPropertiesNormalizer implements NormalizerInterface, SerializerAwar
     }
 
     /**
+     * @param $product
+     * @param $data
+     *
+     * @return array
+     */
+    private function getAncestors($product): array
+    {
+        $ancestorsIds = [];
+        $ancestorsCodes = [];
+        if ($product instanceof VariantProductInterface) {
+            $ancestorsIds = $this->getAncestorsIds($product);
+            $ancestorsCodes = $this->getAncestorsCodes($product);
+        }
+
+        $ancestors = [
+            'ids'   => $ancestorsIds,
+            'codes' => $ancestorsCodes,
+        ];
+
+        return $ancestors;
+    }
+
+    /**
      * @param EntityWithFamilyVariantInterface $entityWithFamilyVariant
      *
      * @return array
@@ -152,5 +172,21 @@ class ProductPropertiesNormalizer implements NormalizerInterface, SerializerAwar
         }
 
         return $ancestorsIds;
+    }
+
+    /**
+     * @param EntityWithFamilyVariantInterface $entityWithFamilyVariant
+     *
+     * @return array
+     */
+    private function getAncestorsCodes(EntityWithFamilyVariantInterface $entityWithFamilyVariant)
+    {
+        $ancestorsCodes = [];
+        while (null !== $parent = $entityWithFamilyVariant->getParent()) {
+            $ancestorsCodes[] = $parent->getCode();
+            $entityWithFamilyVariant = $parent;
+        }
+
+        return $ancestorsCodes;
     }
 }

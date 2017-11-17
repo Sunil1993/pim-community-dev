@@ -29,7 +29,7 @@ class ProductModelPropertiesNormalizer implements NormalizerInterface, Serialize
     private const FIELD_PARENT = 'parent';
     private const FIELD_AT_LEAST_COMPLETE = 'at_least_complete';
     private const FIELD_AT_LEAST_INCOMPLETE = 'at_least_incomplete';
-    private const FIELD_ANCESTORS_IDS = 'ancestors.ids';
+    private const FIELD_ANCESTORS = 'ancestors';
 
     /** @var CompleteFilterInterface */
     private $completenessGridFilterQuery;
@@ -88,7 +88,7 @@ class ProductModelPropertiesNormalizer implements NormalizerInterface, Serialize
         $normalizedData = $this->completenessGridFilterQuery->findCompleteFilterData($productModel);
         $data[self::FIELD_AT_LEAST_COMPLETE] = $normalizedData->atLeastComplete();
         $data[self::FIELD_AT_LEAST_INCOMPLETE] = $normalizedData->atLeastIncomplete();
-        $data[self::FIELD_ANCESTORS_IDS] = $this->getAncestorsIds($productModel);
+        $data[self::FIELD_ANCESTORS] = $this->getAncestors($productModel);
 
         return $data;
     }
@@ -103,18 +103,52 @@ class ProductModelPropertiesNormalizer implements NormalizerInterface, Serialize
     }
 
     /**
-     * @param EntityWithFamilyVariantInterface $entityWithFamilyVariant
+     * @param ProductModelInterface $productModel
      *
      * @return array
      */
-    private function getAncestorsIds(EntityWithFamilyVariantInterface $entityWithFamilyVariant): array
+    private function getAncestors(ProductModelInterface $productModel): array
+    {
+        $ancestorsIds = $this->getAncestorsIds($productModel);
+        $ancestorsCodes = $this->getAncestorsCodes($productModel);
+
+        $ancestors = [
+            'ids'   => $ancestorsIds,
+            'codes' => $ancestorsCodes,
+        ];
+
+        return $ancestors;
+    }
+
+    /**
+     * @param ProductModelInterface $productModel
+     *
+     * @return array
+     */
+    private function getAncestorsIds(ProductModelInterface $productModel): array
     {
         $ancestorsIds = [];
-        while (null !== $parent = $entityWithFamilyVariant->getParent()) {
+        while (null !== $parent = $productModel->getParent()) {
             $ancestorsIds[] = 'product_model_' . $parent->getId();
-            $entityWithFamilyVariant = $parent;
+            $productModel = $parent;
         }
 
         return $ancestorsIds;
+    }
+
+    /**
+     * @param ProductModelInterface $productModel
+     *
+     * @return array
+     */
+    private function getAncestorsCodes(ProductModelInterface $productModel)
+    {
+        $ancestorsCodes = [];
+        while (null !== $parent = $productModel->getParent()) {
+            $ancestorsCodes[] = $parent->getCode();
+            $productModel = $parent;
+        }
+
+        return $ancestorsCodes;
     }
 }

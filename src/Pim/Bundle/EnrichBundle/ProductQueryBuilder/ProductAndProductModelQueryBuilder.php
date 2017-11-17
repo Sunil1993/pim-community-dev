@@ -115,7 +115,7 @@ class ProductAndProductModelQueryBuilder implements ProductQueryBuilderInterface
         $hasIdFilter = $this->hasRawFilter('field', 'id');
         $hasIdentifierFilter = $this->hasRawFilter('field', 'identifier');
         $hasEntityTypeFilter = $this->hasRawFilter('field', 'entity_type');
-        $hasAncestorsIdsFilter = $this->hasRawFilter('field', 'ancestors.ids');
+        $hasAncestorsIdsFilter = $this->hasRawFilter('field', 'subtree.id');
 
         return !$hasAttributeFilters &&
             !$hasParentFilter &&

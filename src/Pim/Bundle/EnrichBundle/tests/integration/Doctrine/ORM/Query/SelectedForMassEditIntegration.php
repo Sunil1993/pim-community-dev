@@ -24,7 +24,7 @@ class SelectedForMassEditIntegration extends TestCase
                 'context' => ['locale' => 'en_US', 'scope' => 'ecommerce'],
             ],
         ];
-        $this->assertProductsInSelection($pqbFilters, 3);
+        $this->assertProductsCountInSelection($pqbFilters, 3);
     }
 
     public function testUserSelectedOneProductModel()
@@ -37,7 +37,7 @@ class SelectedForMassEditIntegration extends TestCase
                 'context' => ['locale' => 'en_US', 'scope' => 'ecommerce'],
             ],
         ];
-        $this->assertProductsInSelection($pqbFilters, 13);
+        $this->assertProductsCountInSelection($pqbFilters, 13);
     }
 
     public function testUserSelectedMultipleProductModels()
@@ -50,7 +50,7 @@ class SelectedForMassEditIntegration extends TestCase
                 'context' => ['locale' => 'en_US', 'scope' => 'ecommerce'],
             ],
         ];
-        $this->assertProductsInSelection($pqbFilters, 18);
+        $this->assertProductsCountInSelection($pqbFilters, 18);
     }
 
     public function testUserSelectedMultipleProductModelsAndProducts()
@@ -63,13 +63,13 @@ class SelectedForMassEditIntegration extends TestCase
                 'context' => ['locale' => 'en_US', 'scope' => 'ecommerce'],
             ],
         ];
-        $this->assertProductsInSelection($pqbFilters, 20);
+        $this->assertProductsCountInSelection($pqbFilters, 20);
     }
 
     public function testUserSelectedAllEntities()
     {
         $pqbFilters = [];
-        $this->assertProductsInSelection($pqbFilters, 242);
+        $this->assertProductsCountInSelection($pqbFilters, 242);
     }
 
     /**
@@ -93,7 +93,7 @@ class SelectedForMassEditIntegration extends TestCase
                 'context'  => ['locale' => 'en_US', 'scope' => 'ecommerce'],
             ],
         ];
-        $this->assertProductsInSelection($pqbFilters, 238);
+        $this->assertProductsCountInSelection($pqbFilters, 238);
     }
 
     public function testUserSelectedAllEntitiesAndUnselectsProductModels()
@@ -113,7 +113,7 @@ class SelectedForMassEditIntegration extends TestCase
                 'context'  => ['locale' => 'en_US', 'scope' => 'ecommerce'],
             ],
         ];
-        $this->assertProductsInSelection($pqbFilters, 234);
+        $this->assertProductsCountInSelection($pqbFilters, 234);
     }
 
     public function testUserSelectedAllEntitiesAndUnselectsProductsAndProductModels()
@@ -133,7 +133,7 @@ class SelectedForMassEditIntegration extends TestCase
                 'context'  => ['locale' => 'en_US', 'scope' => 'ecommerce'],
             ],
         ];
-        $this->assertProductsInSelection($pqbFilters, 236);
+        $this->assertProductsCountInSelection($pqbFilters, 236);
     }
 
     public function testUserSelectedAllVisibleEntities()
@@ -172,7 +172,7 @@ class SelectedForMassEditIntegration extends TestCase
                 'context' => ['locale' => 'en_US', 'scope' => 'ecommerce'],
             ],
         ];
-        $this->assertProductsInSelection($pqbFilters, 117);
+        $this->assertProductsCountInSelection($pqbFilters, 117);
     }
 
     public function testUserSelectedAllEntitiesWithAdditionnalFilter()
@@ -192,7 +192,7 @@ class SelectedForMassEditIntegration extends TestCase
                 'type' => 'attribute',
             ],
         ];
-        $this->assertProductsInSelection($pqbFilters, 12);
+        $this->assertProductsCountInSelection($pqbFilters, 12);
     }
 
     /**
@@ -207,7 +207,7 @@ class SelectedForMassEditIntegration extends TestCase
      * @param array $pqbFilters
      * @param int   $expectedProductsCount
      */
-    private function assertProductsInSelection(array $pqbFilters, int $expectedProductsCount): void
+    private function assertProductsCountInSelection(array $pqbFilters, int $expectedProductsCount): void
     {
         $productsCount = $this->get('pim_enrich.doctrine.query.selected_for_mass_edit')
             ->findImpactedProducts($pqbFilters);
