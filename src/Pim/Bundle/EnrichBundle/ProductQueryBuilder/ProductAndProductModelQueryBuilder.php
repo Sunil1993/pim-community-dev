@@ -84,61 +84,6 @@ class ProductAndProductModelQueryBuilder implements ProductQueryBuilderInterface
     }
 
     /**
-     * If there are no filter on the following fields, the request should not try to group the result by product models.
-     * - field Id or identifier
-     * - on any attributes
-     * - on the parent field
-     *
-     * @return bool
-     */
-    private function isSearchGroupedByProductModels(): bool
-    {
-        $attributeFilters = $this->getAttributeFilters();
-
-        $parentFilter = array_filter(
-            $this->getRawFilters(),
-            function ($filter) {
-                return 'parent' === $filter['field'];
-            }
-        );
-
-        $idFilter = array_filter(
-            $this->getRawFilters(),
-            function ($filter) {
-                return 'id' === $filter['field'];
-            }
-        );
-
-        $identifierFilter = array_filter(
-            $this->getRawFilters(),
-            function ($filter) {
-                return 'identifier' === $filter['field'];
-            }
-        );
-
-        $entityTypeFilter = array_filter(
-            $this->getRawFilters(),
-            function ($filter) {
-                return 'entity_type' === $filter['field'];
-            }
-        );
-
-        $ancestorsIdsFilter = array_filter(
-            $this->getRawFilters(),
-            function ($filter) {
-                return 'ancestors.ids' === $filter['field'];
-            }
-        );
-
-        return empty($attributeFilters) &&
-            empty($parentFilter) &&
-            empty($idFilter) &&
-            empty($identifierFilter) &&
-            empty($entityTypeFilter) &&
-            empty($ancestorsIdsFilter);
-    }
-
-    /**
      * Returns the filters on the attributes
      *
      * @return array
@@ -153,5 +98,40 @@ class ProductAndProductModelQueryBuilder implements ProductQueryBuilderInterface
         );
 
         return $attributeFilters;
+    }
+
+    /**
+     * If there are no filter on the following fields, the request should not try to group the result by product models.
+     * - field Id or identifier
+     * - on any attributes
+     * - on the parent field
+     *
+     * @return bool
+     */
+    private function isSearchGroupedByProductModels(): bool
+    {
+        $hasAttributeFilters = $this->hasRawFilter('type', 'attribute');
+        $hasParentFilter = $this->hasRawFilter('field', 'parent');
+        $hasIdFilter = $this->hasRawFilter('field', 'id');
+        $hasIdentifierFilter = $this->hasRawFilter('field', 'identifier');
+        $hasEntityTypeFilter = $this->hasRawFilter('field', 'entity_type');
+        $hasAncestorsIdsFilter = $this->hasRawFilter('field', 'ancestors.ids');
+
+        return !$hasAttributeFilters &&
+            !$hasParentFilter &&
+            !$hasIdFilter &&
+            !$hasIdentifierFilter &&
+            !$hasEntityTypeFilter &&
+            !$hasAncestorsIdsFilter;
+    }
+
+    private function hasRawFilter(string $filterProperty, string $value)
+    {
+        return !empty(array_filter(
+            $this->getRawFilters(),
+            function ($filter) use ($filterProperty, $value) {
+                return $value === $filter[$filterProperty];
+            }
+        ));
     }
 }

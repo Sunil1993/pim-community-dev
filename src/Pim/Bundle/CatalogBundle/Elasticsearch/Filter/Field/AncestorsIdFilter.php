@@ -74,10 +74,17 @@ class AncestorsIdFilter extends AbstractFieldFilter implements FieldFilterInterf
 
         $this->checkValues($values);
 
-        $this->searchQueryBuilder->addFilter(
+        $this->searchQueryBuilder->addShould(
             [
-                'terms' => [
-                    $field => $values,
+                [
+                    'terms' => [
+                        self::ANCESTOR_ID_FIELD => $values,
+                    ],
+                ],
+                [
+                    'terms' => [
+                        'id' => $values,
+                    ],
                 ],
             ]
         );

@@ -12,6 +12,7 @@ use Pim\Component\Catalog\Query\Filter\Operators;
 use Pim\Component\Catalog\Query\ProductQueryBuilderFactoryInterface;
 use Pim\Component\Catalog\Repository\ProductModelRepositoryInterface;
 use Pim\Component\Enrich\Converter\ConverterInterface;
+use Pim\Component\Enrich\Query\SelectedForMassEditInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -45,6 +46,9 @@ class MassEditController
     /** @var ProductQueryBuilderFactoryInterface */
     private $productQueryBuilderFactory;
 
+    /** @var SelectedForMassEditInterface */
+    private $selectedForMassEdit;
+
     /**
      * @param MassActionParametersParser          $parameterParser
      * @param GridFilterAdapterInterface          $filterAdapter
@@ -53,6 +57,7 @@ class MassEditController
      * @param ProductModelRepositoryInterface     $productModelRepository
      * @param ProductQueryBuilderFactoryInterface $productAndProductModelQueryBuilderFactory
      * @param ProductQueryBuilderFactoryInterface $productQueryBuilderFactory
+     * @param SelectedForMassEditInterface        $selectedForMassEdit
      */
     public function __construct(
         MassActionParametersParser $parameterParser,
@@ -61,7 +66,8 @@ class MassEditController
         ConverterInterface $operationConverter,
         ProductModelRepositoryInterface $productModelRepository,
         ProductQueryBuilderFactoryInterface $productAndProductModelQueryBuilderFactory,
-        ProductQueryBuilderFactoryInterface $productQueryBuilderFactory
+        ProductQueryBuilderFactoryInterface $productQueryBuilderFactory,
+        SelectedForMassEditInterface $selectedForMassEdit
     ) {
         $this->parameterParser      = $parameterParser;
         $this->filterAdapter        = $filterAdapter;
@@ -70,6 +76,7 @@ class MassEditController
         $this->productAndProductModelQueryBuilderFactory = $productAndProductModelQueryBuilderFactory;
         $this->productModelRepository = $productModelRepository;
         $this->productQueryBuilderFactory = $productQueryBuilderFactory;
+        $this->selectedForMassEdit = $selectedForMassEdit;
     }
 
     /**
@@ -81,7 +88,10 @@ class MassEditController
     {
         $parameters = $this->parameterParser->parse($request);
         $filters = $this->filterAdapter->adapt($parameters);
-        $filters['products_count'] = $this->getProductsAndVariantProductsCount($filters);
+//        $correctValue = $this->getProductsAndVariantProductsCount($filters);
+        $calculatedValue = $this->selectedForMassEdit->findImpactedProducts($filters);
+
+        $filters['products_count'] = $calculatedValue;
 
         return new JsonResponse($filters);
     }

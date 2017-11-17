@@ -49,3 +49,18 @@ Feature: Edit common attributes of many products at once
     And I choose the "Edit common attributes" operation
     Then I should see the text "236 products"
 
+  Scenario: Correctly counts the number of products impacted by the mass edit action when a user selects all visible products
+    Given I select rows aphrodite
+    And I select all visible entities
+    And I press the "Bulk actions" button
+    And I choose the "Edit common attributes" operation
+    Then I should see the text "117 products"
+
+  Scenario: Correctly counts the number of products impacted by the mass edit action when a user selects all visible and one filter
+    Given I show the filter "color"
+    And I filter by "color" with operator "in list" and value "Crimson red"
+    And I select rows model-tshirt-divided-crimson-red
+    And I select all visible entities
+    And I press the "Bulk actions" button
+    And I choose the "Edit common attributes" operation
+    Then I should see the text "12 products"
